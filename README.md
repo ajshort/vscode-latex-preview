@@ -1,0 +1,1 @@
+# VSCode Latex Live Extension
