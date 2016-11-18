@@ -13,7 +13,7 @@ export function activate(ctx: vscode.ExtensionContext) {
   );
 
   // Document provider
-  const renderer = new LatexDocumentProvider();
+  const renderer = new LatexDocumentProvider(ctx);
   ctx.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider("latex-live", renderer));
 
   ctx.subscriptions.push(vscode.workspace.onDidSaveTextDocument(doc => {
