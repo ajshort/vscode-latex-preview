@@ -1,25 +1,36 @@
 import LatexDocumentProvider from "./document-provider";
 import { basename } from "path";
-import { ExtensionContext, Uri, ViewColumn, commands, window, workspace } from "vscode";
+import * as vscode from "vscode";
 
-export function activate(ctx: ExtensionContext) {
+const LATEX_SELECTOR = { language: "latex", scheme: "file" };
+
+export function activate(ctx: vscode.ExtensionContext) {
+  // Commands
   ctx.subscriptions.push(
-    commands.registerCommand("latex-live.showPreview", showPreview),
-    commands.registerCommand("latex-live.showPreviewToSide", showPreviewToSide),
-    commands.registerCommand("latex-live.showSource", showSource)
+    vscode.commands.registerCommand("latex-live.showPreview", showPreview),
+    vscode.commands.registerCommand("latex-live.showPreviewToSide", showPreviewToSide),
+    vscode.commands.registerCommand("latex-live.showSource", showSource)
   );
 
-  ctx.subscriptions.push(workspace.registerTextDocumentContentProvider("latex-live", new LatexDocumentProvider()));
+  // Document provider
+  const renderer = new LatexDocumentProvider();
+  ctx.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider("latex-live", renderer));
+
+  ctx.subscriptions.push(vscode.workspace.onDidSaveTextDocument(doc => {
+    if (vscode.languages.match(LATEX_SELECTOR, doc) > 0) {
+      renderer.update(doc.uri);
+    }
+  }));
 }
 
-function showPreview(uri?: Uri, column?: ViewColumn) {
+function showPreview(uri?: vscode.Uri, column?: vscode.ViewColumn) {
   const liveUri = uri.with({ scheme: "latex-live" });
   const title = `Preview "${basename(uri.fsPath)}"`;
 
-  return commands.executeCommand("vscode.previewHtml", liveUri, column, title);
+  return vscode.commands.executeCommand("vscode.previewHtml", liveUri, vscode.ViewColumn.Two, title);
 }
 
-function showPreviewToSide(uri?: Uri) {
+function showPreviewToSide(uri?: vscode.Uri) {
 }
 
 function showSource() {
