@@ -7,7 +7,9 @@ export default class LatexDocumentProvider implements TextDocumentContentProvide
 
   public provideTextDocumentContent(uri: Uri, token: CancellationToken): Thenable<string> {
     const path = uri.fsPath;
+
     const cwd = dirname(path);
+    const base = basename(path, ".tex");
 
     // Build the dvi file. If it fails, display the log.
     return new Promise(resolve => {
@@ -16,7 +18,10 @@ export default class LatexDocumentProvider implements TextDocumentContentProvide
           return resolve(out);
         }
 
-        resolve(`Hello, world at ${Date.now()}`);
+        // Convert the dvi file to png.
+        cp.exec(`dvipng -T tight -D 200 ${base}.dvi`, { cwd }, () => {
+          resolve(`Hello, world at ${Date.now()}`);
+        });
       });
     });
   }
