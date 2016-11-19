@@ -63,6 +63,9 @@
     "compile": "tsc -watch -p ./",
     "postinstall": "node ./node_modules/vscode/bin/install"
   },
+  "dependencies": {
+    "pdfjs-dist": "^1.6.329"
+  },
   "devDependencies": {
     "@types/mocha": "^2.2.32",
     "@types/node": "^6.0.40",

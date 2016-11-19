@@ -11,21 +11,17 @@ export default class LatexDocumentProvider implements TextDocumentContentProvide
 
   public provideTextDocumentContent(uri: Uri, token: CancellationToken): Thenable<string> {
     const path = uri.fsPath;
-
     const cwd = dirname(path);
-    const base = basename(path, ".tex");
+    const pdf = join(cwd, "preview.pdf");
 
     // Build the dvi file. If it fails, display the log.
     return new Promise(resolve => {
-      cp.exec(`latex -halt-on-error ${quoted(path)}`, { cwd }, (err, out) => {
+      cp.exec(`pdflatex -jobname=preview -halt-on-error ${quoted(path)}`, { cwd }, (err, out) => {
         if (err) {
           return resolve(out);
         }
 
-        // Convert the dvi file to png.
-        cp.exec(`dvipng -T tight -D 200 ${base}.dvi`, { cwd }, () => {
-          resolve(this.getPreviewContent(cwd));
-        });
+        resolve(this.getPreviewContent(pdf));
       });
     });
   }
@@ -38,26 +34,29 @@ export default class LatexDocumentProvider implements TextDocumentContentProvide
     return this.changed.event;
   }
 
-  private async getPreviewContent(dir: string): Promise<string> {
-    const pages = (await readdir(dir))
-      .filter(name => name.endsWith(".png"))
-      .sort()
-      .map(name => join(dir, name))
-      .reduce((val, img) => val.concat(`<img src="file:${img}" />`), "");
+  private getPreviewContent(url: string): string {
+    const escaped = url.replace("&", "&amp;").replace('"', "&quot;");
 
-    return `<!DOCTYPE html>
+    return `
+    <!DOCTYPE html>
     <html>
     <head>
-      <link rel="stylesheet" href="${this.getMediaPath("style.css")}" />
+      <script src="${this.getModulePath("pdfjs-dist/build/pdf.js")}"></script>
+      <script src="${this.getModulePath("pdfjs-dist/build/pdf.worker.js")}"></script>
+      <script src="${this.getPath("src/client.js")}"></script>
     </head>
     <body class="preview">
-      ${pages}
+      <canvas id="pdf" data-url="${escaped}" />
     </body>
     </html>`;
   }
 
-  private getMediaPath(file: string): string {
-    return this.context.asAbsolutePath(join("media", file));
+  private getPath(file: string): string {
+    return this.context.asAbsolutePath(file);
+  }
+
+  private getModulePath(file: string): string {
+    return this.context.asAbsolutePath(join("node_modules", file));
   }
 }
 
