@@ -4,7 +4,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
 
   PDFJS.getDocument(url).then(function(pdf) {
     pdf.getPage(1).then(function (page) {
-      const viewport = page.getViewport(1);
+      const viewport = page.getViewport(document.body.clientWidth / page.getViewport(1).width);
       const canvasContext = canvas.getContext("2d");
 
       canvas.height = viewport.height;

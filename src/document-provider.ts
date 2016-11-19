@@ -46,7 +46,7 @@ export default class LatexDocumentProvider implements TextDocumentContentProvide
       <script src="${this.getPath("src/client.js")}"></script>
     </head>
     <body class="preview">
-      <canvas id="pdf" data-url="${escaped}" />
+      <canvas id="pdf" data-url="${escaped}" style="width: 100%; height: 100%;" />
     </body>
     </html>`;
   }
@@ -58,10 +58,6 @@ export default class LatexDocumentProvider implements TextDocumentContentProvide
   private getModulePath(file: string): string {
     return this.context.asAbsolutePath(join("node_modules", file));
   }
-}
-
-function readdir(path: string): Promise<string[]> {
-  return new Promise((c, e) => fs.readdir(path, (err, files) => err ? e(err) : c(files)));
 }
 
 function quoted(str: string): string {
