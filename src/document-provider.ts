@@ -46,7 +46,7 @@ export default class LatexDocumentProvider implements TextDocumentContentProvide
       <script src="${this.getPath("src/client.js")}"></script>
     </head>
     <body class="preview">
-      <canvas id="pdf" data-url="${escaped}" style="width: 100%; height: 100%;" />
+      <div id="pdf" data-url="${escaped}"></div>
     </body>
     </html>`;
   }

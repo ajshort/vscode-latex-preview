@@ -1,16 +1,29 @@
-document.addEventListener("DOMContentLoaded", function(event) {
-  const canvas = document.getElementById("pdf");
-  const url = canvas.dataset.url;
+document.addEventListener("DOMContentLoaded", () => {
+  const container = document.getElementById("pdf");
+  const url = container.dataset.url;
 
-  PDFJS.getDocument(url).then(function(pdf) {
-    pdf.getPage(1).then(function (page) {
-      const viewport = page.getViewport(document.body.clientWidth / page.getViewport(1).width);
-      const canvasContext = canvas.getContext("2d");
+  PDFJS.getDocument(url).then(pdf => {
+    function render(num) {
+      console.log(num);
+      pdf.getPage(num).then(page => {
+        const viewport = page.getViewport(1);
 
-      canvas.height = viewport.height;
-      canvas.width = viewport.width;
+        const canvas = document.createElement("canvas");
+        const canvasContext = canvas.getContext("2d");
 
-      page.render({ viewport, canvasContext });
-    });
+        container.appendChild(canvas);
+
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+
+        page.render({ canvasContext, viewport });
+
+        if (num < pdf.numPages) {
+          render(num + 1);
+        }
+      });
+    }
+
+    render(1);
   });
 });
