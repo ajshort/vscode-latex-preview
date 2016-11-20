@@ -45,7 +45,7 @@
         {
           "when": "editorLangId == latex",
           "command": "latex-preview.showPreview",
-          "alt": "markdown.showPreviewToSide",
+          "alt": "latex-preview.showPreviewToSide",
           "group": "navigation"
         },
         {

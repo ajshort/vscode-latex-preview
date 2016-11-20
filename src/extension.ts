@@ -34,13 +34,26 @@ function showPreview(uri?: Uri, column?: ViewColumn) {
     return;
   }
 
+  if (!column) {
+    column = window.activeTextEditor ? window.activeTextEditor.viewColumn : ViewColumn.One;
+  }
+
   const previewUri = uri.with({ scheme: "latex-preview" });
   const title = `Preview "${basename(uri.fsPath)}"`;
 
-  return commands.executeCommand("vscode.previewHtml", previewUri, ViewColumn.Two, title);
+  return commands.executeCommand("vscode.previewHtml", previewUri, column, title);
 }
 
 function showPreviewToSide(uri?: Uri) {
+  if (!window.activeTextEditor) {
+    return showPreview(uri);
+  }
+
+  switch (window.activeTextEditor.viewColumn) {
+    case ViewColumn.One: return showPreview(uri, ViewColumn.Two);
+    case ViewColumn.Two: return showPreview(uri, ViewColumn.Three);
+    default: return showPreview(uri, ViewColumn.One);
+  }
 }
 
 function showSource(uri?: Uri) {
