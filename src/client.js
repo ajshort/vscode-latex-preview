@@ -9,48 +9,50 @@ document.addEventListener("DOMContentLoaded", () => {
     const data = JSON.parse(event.data);
 
     if (data.type === "updated" && data.uri === uri) {
-      render(uri);
+      loadAndRender(uri);
     }
   };
 
   // Render the PDF.
-  render(uri);
+  loadAndRender(uri);
 });
 
-function render(uri) {
-  PDFJS.getDocument(uri).then(pdf => {
-    const canvases = document.getElementsByTagName("canvas");
+function loadAndRender(uri) {
+  PDFJS.getDocument(uri).then(render);
+}
 
-    // Clear any excess canvases.
-    for (let i = canvases.length; i > pdf.numPages; i--) {
-      canvases[i - 1].remove();
-    }
+function render(pdf) {
+  const canvases = document.getElementsByTagName("canvas");
 
-    // Render the pages.
-    function renderPage(i) {
-      pdf.getPage(i).then(page => {
-        let canvas;
+  // Clear any excess canvases.
+  for (let i = canvases.length; i > pdf.numPages; i--) {
+    canvases[i - 1].remove();
+  }
 
-        if (i > canvases.length) {
-          canvas = document.body.appendChild(document.createElement("canvas"));
-        } else {
-          canvas = canvases[i - 1];
-        }
+  // Render the pages.
+  function renderPage(i) {
+    pdf.getPage(i).then(page => {
+      let canvas;
 
-        const viewport = page.getViewport(1);
-        const canvasContext = canvas.getContext("2d");
+      if (i > canvases.length) {
+        canvas = document.body.appendChild(document.createElement("canvas"));
+      } else {
+        canvas = canvases[i - 1];
+      }
 
-        canvas.height = viewport.height;
-        canvas.width = viewport.width;
+      const viewport = page.getViewport(document.body.clientWidth / page.getViewport(1).width);
+      const canvasContext = canvas.getContext("2d");
 
-        page.render({ canvasContext, viewport });
+      canvas.height = viewport.height;
+      canvas.width = viewport.width;
 
-        if (i < pdf.numPages) {
-          renderPage(i + 1);
-        }
-      });
-    }
+      page.render({ canvasContext, viewport });
 
-    renderPage(1);
-  });
+      if (i < pdf.numPages) {
+        renderPage(i + 1);
+      }
+    });
+  }
+
+  renderPage(1);
 }

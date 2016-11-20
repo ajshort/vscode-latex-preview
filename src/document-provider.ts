@@ -34,6 +34,8 @@ export default class LatexDocumentProvider implements TextDocumentContentProvide
     <!DOCTYPE html>
     <html>
     <head>
+      <link rel="stylesheet" href="${this.getPath("media/style.css")}">
+
       <script src="${this.getModulePath("pdfjs-dist/build/pdf.js")}"></script>
       <script src="${this.getModulePath("pdfjs-dist/build/pdf.worker.js")}"></script>
       <script src="${this.getPath("src/client.js")}"></script>
