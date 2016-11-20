@@ -49,7 +49,7 @@
           "group": "navigation"
         },
         {
-          "when": "resourceScheme == markdown",
+          "when": "resourceScheme == latex-preview",
           "command": "latex-preview.showSource",
           "group": "navigation"
         }
