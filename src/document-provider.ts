@@ -1,6 +1,6 @@
 import * as cp from "child_process";
 import * as http from "http";
-import { dirname, join } from "path";
+import { join } from "path";
 import * as tmp from "tmp";
 import { CancellationToken, ExtensionContext, TextDocumentContentProvider, Uri } from "vscode";
 import * as ws from "ws";
@@ -15,7 +15,7 @@ export default class LatexDocumentProvider implements TextDocumentContentProvide
   constructor(private context: ExtensionContext) {
     this.http = http.createServer();
     this.listening = new Promise((c, e) => {
-      this.http.listen(0, "localhost", undefined, err => err ? e(err) : c())
+      this.http.listen(0, "localhost", undefined, err => err ? e(err) : c());
     });
 
     this.websocket = ws.createServer({ server: this.http });
