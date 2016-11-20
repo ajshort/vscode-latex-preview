@@ -16,6 +16,11 @@ export default class LatexDocumentProvider implements TextDocumentContentProvide
     });
 
     this.websocket = ws.createServer({ server: this.http });
+    this.websocket.on("connection", client => {
+      client.on("message", data => {
+        console.log(data);
+      });
+    });
   }
 
   public dispose() {

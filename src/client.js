@@ -1,8 +1,11 @@
+let uri;
+let socket;
+
 document.addEventListener("DOMContentLoaded", () => {
-  const uri = document.body.dataset.pdfUri;
+  uri = document.body.dataset.pdfUri;
 
   // Connect to the extension with a websocket.
-  const socket = new WebSocket(document.body.dataset.websocketUri);
+  socket = new WebSocket(document.body.dataset.websocketUri);
 
   // Listen for updates to the document.
   socket.onmessage = event => {
@@ -45,6 +48,7 @@ function render(pdf) {
 
       canvas.height = viewport.height;
       canvas.width = viewport.width;
+      canvas.onclick = getOnClickHandler(i);
 
       page.render({ canvasContext, viewport });
 
@@ -55,4 +59,12 @@ function render(pdf) {
   }
 
   renderPage(1);
+}
+
+function getOnClickHandler(page) {
+  return e => {
+    socket.send(JSON.stringify({
+      type: "clicked", page, x: e.x, y: e.y
+    }));
+  };
 }
