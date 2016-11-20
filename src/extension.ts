@@ -7,9 +7,10 @@ const LATEX_SELECTOR = { language: "latex", scheme: "file" };
 export function activate(ctx: ExtensionContext) {
   // Commands
   ctx.subscriptions.push(
+    commands.registerCommand("latex-preview.createBuildTask", createBuildTask),
     commands.registerCommand("latex-preview.showPreview", showPreview),
     commands.registerCommand("latex-preview.showPreviewToSide", showPreviewToSide),
-    commands.registerCommand("latex-preview.showSource", showSource)
+    commands.registerCommand("latex-preview.showSource", showSource),
   );
 
   // Document provider
@@ -23,6 +24,22 @@ export function activate(ctx: ExtensionContext) {
       renderer.update(doc.uri);
     }
   }));
+}
+
+async function createBuildTask() {
+  const texes = workspace.findFiles("**/*.tex", "").then(uris => uris.map(uri => workspace.asRelativePath(uri)));
+  const file = await window.showQuickPick(texes, { placeHolder: "File to build" });
+
+  if (!file) {
+    return;
+  }
+
+  workspace.getConfiguration().update("tasks", {
+    version: "0.1.0",
+    command: "pdflatex",
+    isShellCommand: true,
+    args: [file],
+  });
 }
 
 function showPreview(uri?: Uri, column?: ViewColumn) {

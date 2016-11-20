@@ -1,3 +1,6 @@
 {
-  "extends": "tslint:latest"
+  "extends": "tslint:latest",
+  "rules": {
+    "object-literal-sort-keys": false
+  }
 }
