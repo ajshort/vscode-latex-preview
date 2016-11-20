@@ -1,1 +1,1 @@
-# VSCode Latex Live Extension
+# VSCode Latex Preview Extension

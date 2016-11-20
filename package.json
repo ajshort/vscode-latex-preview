@@ -1,7 +1,7 @@
 {
-  "name": "latex-live",
-  "displayName": "LaTeX Live",
-  "description": "Compilation and live preview of LaTeX documents",
+  "name": "latex-preview",
+  "displayName": "LaTeX Preview",
+  "description": "Compilation and embedded preview of LaTeX documents",
   "version": "0.0.1",
   "publisher": "ajshort",
   "engines": {
@@ -12,25 +12,25 @@
     "Productivity"
   ],
   "activationEvents": [
-    "onCommand:latex-live.showPreview",
-    "onCommand:latex-live.showPreviewToSide",
-    "onCommand:latex-live.showSource"
+    "onCommand:latex-preview.showPreview",
+    "onCommand:latex-preview.showPreviewToSide",
+    "onCommand:latex-preview.showSource"
   ],
   "main": "./out/src/extension",
   "contributes": {
     "commands": [
       {
-        "command": "latex-live.showPreview",
+        "command": "latex-preview.showPreview",
         "category": "LaTeX",
         "title": "Open Preview"
       },
       {
-        "command": "latex-live.showPreviewToSide",
+        "command": "latex-preview.showPreviewToSide",
         "category": "LaTeX",
         "title": "Open Preview to the Side"
       },
       {
-        "command": "latex-live.showSource",
+        "command": "latex-preview.showSource",
         "category": "LaTeX",
         "title": "Show Source"
       }
@@ -39,20 +39,20 @@
       "editor/title": [
         {
           "when": "editorLangId == latex",
-          "command": "latex-live.showPreview",
+          "command": "latex-preview.showPreview",
           "alt": "markdown.showPreviewToSide",
           "group": "navigation"
         },
         {
           "when": "resourceScheme == markdown",
-          "command": "latex-live.showSource",
+          "command": "latex-preview.showSource",
           "group": "navigation"
         }
       ],
       "explorer/context": [
         {
           "when": "resourceLangId == latex",
-          "command": "latex-live.showPreview",
+          "command": "latex-preview.showPreview",
           "group": "navigation"
         }
       ]
