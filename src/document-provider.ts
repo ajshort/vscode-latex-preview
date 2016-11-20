@@ -51,9 +51,9 @@ export default class LatexDocumentProvider implements TextDocumentContentProvide
 
       <script src="${this.getModulePath("pdfjs-dist/build/pdf.js")}"></script>
       <script src="${this.getModulePath("pdfjs-dist/build/pdf.worker.js")}"></script>
-      <script src="${this.getPath("src/client.js")}"></script>
+      <script src="${this.getPath("out/src/client.js")}"></script>
     </head>
-    <body class="preview" data-websocket-uri="${attr(ws)}" data-pdf-uri="${attr(preview.toString())}">
+    <body class="preview" data-websocket="${attr(ws)}" data-pdf="${attr(preview.toString())}">
     </body>
     </html>`;
   }

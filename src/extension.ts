@@ -21,7 +21,7 @@ export function activate(ctx: ExtensionContext) {
 
   ctx.subscriptions.push(workspace.onDidSaveTextDocument(doc => {
     if (languages.match(LATEX_SELECTOR, doc) > 0) {
-      renderer.update(doc.uri);
+      renderer.update(doc.uri.with({ scheme: "latex-preview" }));
     }
   }));
 }
