@@ -26,6 +26,14 @@ export function activate(ctx: ExtensionContext) {
 }
 
 function showPreview(uri?: Uri, column?: ViewColumn) {
+  if (!uri && window.activeTextEditor) {
+    uri = window.activeTextEditor.document.uri;
+  }
+
+  if (!uri) {
+    return;
+  }
+
   const previewUri = uri.with({ scheme: "latex-preview" });
   const title = `Preview "${basename(uri.fsPath)}"`;
 
