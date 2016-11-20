@@ -4,6 +4,11 @@
   "description": "Compilation and embedded preview of LaTeX documents",
   "version": "0.0.1",
   "publisher": "ajshort",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ajshort/vscode-latex-preview.git"
+  },
   "engines": {
     "vscode": "^1.5.0"
   },
