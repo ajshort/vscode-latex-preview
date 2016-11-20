@@ -70,11 +70,13 @@
   },
   "dependencies": {
     "pdfjs-dist": "^1.6.329",
+    "tmp": "0.0.30",
     "ws": "^1.1.1"
   },
   "devDependencies": {
     "@types/mocha": "^2.2.32",
     "@types/node": "^6.0.40",
+    "@types/tmp": "0.0.31",
     "@types/ws": "0.0.36",
     "mocha": "^2.3.3",
     "typescript": "^2.0.3",
