@@ -66,7 +66,7 @@ export default class LatexDocumentProvider implements TextDocumentContentProvide
     const cwd = dirname(path);
 
     return new Promise((resolve, reject) => {
-      cp.exec(`pdflatex -jobname=preview -halt-on-error ${arg(path)}`, { cwd }, (err, out) =>
+      cp.exec(`pdflatex -jobname=preview -synctex=1 -halt-on-error ${arg(path)}`, { cwd }, (err, out) =>
         err ? reject(err) : resolve(Uri.file(join(cwd, "preview.pdf")))
       );
     });
