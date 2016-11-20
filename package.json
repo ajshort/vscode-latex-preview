@@ -64,11 +64,13 @@
     "postinstall": "node ./node_modules/vscode/bin/install"
   },
   "dependencies": {
-    "pdfjs-dist": "^1.6.329"
+    "pdfjs-dist": "^1.6.329",
+    "ws": "^1.1.1"
   },
   "devDependencies": {
     "@types/mocha": "^2.2.32",
     "@types/node": "^6.0.40",
+    "@types/ws": "0.0.36",
     "mocha": "^2.3.3",
     "typescript": "^2.0.3",
     "vscode": "^1.0.0"
