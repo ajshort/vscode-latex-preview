@@ -1,8 +1,9 @@
+import * as synctex from "./synctex";
 import * as cp from "child_process";
 import * as http from "http";
 import { join } from "path";
 import * as tmp from "tmp";
-import { CancellationToken, ExtensionContext, Position, TextDocumentContentProvider, Uri } from "vscode";
+import { CancellationToken, ExtensionContext, Position, TextDocumentContentProvider, Uri, commands } from "vscode";
 import * as ws from "ws";
 
 export default class LatexDocumentProvider implements TextDocumentContentProvider {
@@ -28,6 +29,13 @@ export default class LatexDocumentProvider implements TextDocumentContentProvide
 
   public dispose() {
     this.websocket.close();
+  }
+
+  /**
+   * Returns whether a document has been opened in a preview view.
+   */
+  public isPreviewing(uri: Uri): boolean {
+    return uri.fsPath in this.dirs;
   }
 
   public async provideTextDocumentContent(uri: Uri, token: CancellationToken): Promise<string> {
@@ -59,14 +67,14 @@ export default class LatexDocumentProvider implements TextDocumentContentProvide
   }
 
   public async update(uri: Uri) {
-    if (!(uri.fsPath in this.dirs)) {
+    if (!this.isPreviewing(uri)) {
       return;
     }
 
     const preview = await this.build(uri);
 
     for (const client of this.websocket.clients) {
-      client.send(JSON.stringify({ type: "updated", uri: preview.toString() }));
+      client.send(JSON.stringify({ type: "update", uri: preview.toString() }));
     }
   }
 
@@ -74,14 +82,24 @@ export default class LatexDocumentProvider implements TextDocumentContentProvide
    * Shows a text editor position in the preview.
    */
   public async showPosition(uri: Uri, position: Position) {
-    const line = position.line + 1;
-    const col = position.character + 1;
-    const input = uri.fsPath;
-    const output = join(this.dirs[uri.fsPath], "preview.pdf");
+    if (!this.isPreviewing(uri)) {
+      await commands.executeCommand("latex-preview.showPreview", uri);
+    }
 
-    const location = await new Promise<string>((c, e) => {
-      cp.exec(`synctex view -i ${line}:${col}:${input} -o ${output}`, (err, out) => err ? e(err) : c(out));
+    const rects = await synctex.view({
+      line: position.line + 1,
+      column: position.character + 1,
+      input: uri.fsPath,
+      output: join(this.dirs[uri.fsPath], "preview.pdf"),
     });
+
+    if (rects.length === 0) {
+      return;
+    }
+
+    for (const client of this.websocket.clients) {
+      client.send(JSON.stringify({ type: "show", rect: rects[0] }));
+    }
   }
 
   /**

@@ -10,7 +10,7 @@ document.addEventListener("DOMContentLoaded", () => {
   socket.addEventListener("message", event => {
     const data = JSON.parse(event.data);
 
-    if (data.type === "updated" && data.uri === uri) {
+    if (data.type === "update" && data.uri === uri) {
       loadAndRender(uri);
     }
   });
@@ -59,7 +59,7 @@ function render(pdf: PDFDocumentProxy) {
 function getClickHandler(el: Element, page: number) {
   return (e: MouseEvent) => {
     socket.send(JSON.stringify({
-      type: "clicked",
+      type: "click",
       page,
       x: e.x / el.clientWidth,
       y: e.y / el.clientHeight,
