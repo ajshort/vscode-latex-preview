@@ -1,8 +1,8 @@
 import * as cp from "child_process";
 import * as http from "http";
-import { join } from "path";
+import { dirname, join } from "path";
 import * as tmp from "tmp";
-import { CancellationToken, ExtensionContext, TextDocumentContentProvider, Uri } from "vscode";
+import { CancellationToken, ExtensionContext, Position, TextDocumentContentProvider, Uri } from "vscode";
 import * as ws from "ws";
 
 export default class LatexDocumentProvider implements TextDocumentContentProvider {
@@ -34,7 +34,7 @@ export default class LatexDocumentProvider implements TextDocumentContentProvide
     await this.listening;
 
     // Create a temp dir for the preview.
-    this.dirs[uri.toString()] = await new Promise<string>((c, e) => {
+    this.dirs[uri.fsPath] = await new Promise<string>((c, e) => {
       tmp.dir({ unsafeCleanup: true }, (err, path) => err ? e(err) : c(path));
     });
 
@@ -67,11 +67,25 @@ export default class LatexDocumentProvider implements TextDocumentContentProvide
   }
 
   /**
+   * Shows a text editor position in the preview.
+   */
+  public async showPosition(uri: Uri, position: Position) {
+    const line = position.line + 1;
+    const col = position.character + 1;
+    const input = uri.fsPath;
+    const output = join(this.dirs[uri.fsPath], "preview.pdf");
+
+    const location = await new Promise<string>((c, e) => {
+      cp.exec(`synctex view -i ${line}:${col}:${input} -o ${output}`, (err, out) => err ? e(err) : c(out));
+    });
+  }
+
+  /**
    * Builds a PDF and returns the URI to it.
    */
   private build(uri: Uri): Promise<Uri> {
     const path = uri.fsPath;
-    const cwd = this.dirs[uri.toString()];
+    const cwd = this.dirs[uri.fsPath];
 
     return new Promise((resolve, reject) => {
       cp.exec(`pdflatex -jobname=preview -synctex=1 -halt-on-error ${arg(path)}`, { cwd }, (err, out) =>

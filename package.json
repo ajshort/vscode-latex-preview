@@ -20,6 +20,7 @@
     "onCommand:latex-preview.createBuildTask",
     "onCommand:latex-preview.showPreview",
     "onCommand:latex-preview.showPreviewToSide",
+    "onCommand:latex-preview.showInPreview",
     "onCommand:latex-preview.showSource"
   ],
   "main": "./out/src/extension",
@@ -41,12 +42,24 @@
         "title": "Open Preview to the Side"
       },
       {
+        "command": "latex-preview.showInPreview",
+        "category": "LaTeX",
+        "title": "Show in Preview"
+      },
+      {
         "command": "latex-preview.showSource",
         "category": "LaTeX",
         "title": "Show Source"
       }
     ],
     "menus": {
+      "editor/context": [
+        {
+          "when": "resourceLangId == latex",
+          "command": "latex-preview.showInPreview",
+          "group": "navigation"
+        }
+      ],
       "editor/title": [
         {
           "when": "editorLangId == latex",

@@ -4,24 +4,30 @@ import { ExtensionContext, Uri, ViewColumn, commands, languages, window, workspa
 
 const LATEX_SELECTOR = { language: "latex", scheme: "file" };
 
+/**
+ * The extension's document provider instance.
+ */
+let provider: LatexDocumentProvider;
+
 export function activate(ctx: ExtensionContext) {
   // Commands
   ctx.subscriptions.push(
     commands.registerCommand("latex-preview.createBuildTask", createBuildTask),
     commands.registerCommand("latex-preview.showPreview", showPreview),
     commands.registerCommand("latex-preview.showPreviewToSide", showPreviewToSide),
+    commands.registerCommand("latex-preview.showInPreview", showInPreview),
     commands.registerCommand("latex-preview.showSource", showSource),
   );
 
   // Document provider
-  const renderer = new LatexDocumentProvider(ctx);
+  provider = new LatexDocumentProvider(ctx);
 
-  ctx.subscriptions.push(renderer);
-  ctx.subscriptions.push(workspace.registerTextDocumentContentProvider("latex-preview", renderer));
+  ctx.subscriptions.push(provider);
+  ctx.subscriptions.push(workspace.registerTextDocumentContentProvider("latex-preview", provider));
 
   ctx.subscriptions.push(workspace.onDidSaveTextDocument(doc => {
     if (languages.match(LATEX_SELECTOR, doc) > 0) {
-      renderer.update(doc.uri.with({ scheme: "latex-preview" }));
+      provider.update(doc.uri);
     }
   }));
 }
@@ -71,6 +77,20 @@ function showPreviewToSide(uri?: Uri) {
     case ViewColumn.Two: return showPreview(uri, ViewColumn.Three);
     default: return showPreview(uri, ViewColumn.One);
   }
+}
+
+/**
+ * Shows the preview and jumps to the selected location.
+ */
+function showInPreview() {
+  const uri = window.activeTextEditor.document.uri;
+  const position = window.activeTextEditor.selection.active;
+
+  if (!uri || !position) {
+    return;
+  }
+
+  return provider.showPosition(uri, position);
 }
 
 function showSource(uri?: Uri) {
