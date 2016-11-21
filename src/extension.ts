@@ -44,7 +44,18 @@ async function createBuildTask() {
     version: "0.1.0",
     command: "pdflatex",
     isShellCommand: true,
-    args: [file],
+    args: ["-interaction=nonstopmode", "-file-line-error", file],
+    showOutput: "silent",
+    problemMatcher: {
+      owner: "latex-preview",
+      fileLocation: ["relative", "${workspaceRoot}"],
+      pattern: {
+        regexp: "^(.*):(\\d+):\\s+(.*)$",
+        file: 1,
+        line: 2,
+        message: 3,
+      },
+    },
   });
 }
 
