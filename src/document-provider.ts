@@ -1,6 +1,6 @@
 import * as cp from "child_process";
 import * as http from "http";
-import { dirname, join } from "path";
+import { join } from "path";
 import * as tmp from "tmp";
 import { CancellationToken, ExtensionContext, Position, TextDocumentContentProvider, Uri } from "vscode";
 import * as ws from "ws";
@@ -59,6 +59,10 @@ export default class LatexDocumentProvider implements TextDocumentContentProvide
   }
 
   public async update(uri: Uri) {
+    if (!(uri.fsPath in this.dirs)) {
+      return;
+    }
+
     const preview = await this.build(uri);
 
     for (const client of this.websocket.clients) {
@@ -88,7 +92,7 @@ export default class LatexDocumentProvider implements TextDocumentContentProvide
     const cwd = this.dirs[uri.fsPath];
 
     return new Promise((resolve, reject) => {
-      cp.exec(`pdflatex -jobname=preview -synctex=1 -halt-on-error ${arg(path)}`, { cwd }, (err, out) =>
+      cp.exec(`pdflatex -jobname=preview -synctex=1 -interaction=nonstopmode ${arg(path)}`, { cwd }, (err, out) =>
         err ? reject(err) : resolve(Uri.file(join(cwd, "preview.pdf")))
       );
     });
