@@ -1,8 +1,7 @@
+import * as constants from "./constants";
 import LatexDocumentProvider from "./document-provider";
 import { basename } from "path";
 import { ExtensionContext, Uri, ViewColumn, commands, languages, window, workspace } from "vscode";
-
-const LATEX_SELECTOR = { language: "latex", scheme: "file" };
 
 /**
  * The extension's document provider instance.
@@ -12,21 +11,21 @@ let provider: LatexDocumentProvider;
 export function activate(ctx: ExtensionContext) {
   // Commands
   ctx.subscriptions.push(
-    commands.registerCommand("latex-preview.createBuildTask", createBuildTask),
-    commands.registerCommand("latex-preview.showPreview", showPreview),
-    commands.registerCommand("latex-preview.showPreviewToSide", showPreviewToSide),
-    commands.registerCommand("latex-preview.showInPreview", showInPreview),
-    commands.registerCommand("latex-preview.showSource", showSource),
+    commands.registerCommand(constants.COMMAND_CREATE_BUILD_TASK, createBuildTask),
+    commands.registerCommand(constants.COMMAND_SHOW_PREVIEW, showPreview),
+    commands.registerCommand(constants.COMMAND_SHOW_PREVIEW_TO_SIDE, showPreviewToSide),
+    commands.registerCommand(constants.COMMAND_SHOW_IN_PREVIEW, showInPreview),
+    commands.registerCommand(constants.COMMAND_SHOW_SOURCE, showSource),
   );
 
   // Document provider
   provider = new LatexDocumentProvider(ctx);
 
   ctx.subscriptions.push(provider);
-  ctx.subscriptions.push(workspace.registerTextDocumentContentProvider("latex-preview", provider));
+  ctx.subscriptions.push(workspace.registerTextDocumentContentProvider(constants.PREVIEW_SCHEME, provider));
 
   ctx.subscriptions.push(workspace.onDidSaveTextDocument(doc => {
-    if (languages.match(LATEX_SELECTOR, doc) > 0) {
+    if (languages.match(constants.LATEX_SELECTOR, doc) > 0) {
       provider.update(doc.uri);
     }
   }));
@@ -50,7 +49,7 @@ async function createBuildTask() {
       owner: "latex-preview",
       fileLocation: ["relative", "${workspaceRoot}"],
       pattern: {
-        regexp: "^(.*):(\\d+):\\s+(.*)$",
+        regexp: constants.ERROR_REGEX,
         file: 1,
         line: 2,
         message: 3,
@@ -72,7 +71,7 @@ function showPreview(uri?: Uri, column?: ViewColumn) {
     column = window.activeTextEditor ? window.activeTextEditor.viewColumn : ViewColumn.One;
   }
 
-  const previewUri = uri.with({ scheme: "latex-preview" });
+  const previewUri = uri.with({ scheme: constants.PREVIEW_SCHEME });
   const title = `Preview "${basename(uri.fsPath)}"`;
 
   return commands.executeCommand("vscode.previewHtml", previewUri, column, title);
