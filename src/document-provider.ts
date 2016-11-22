@@ -142,15 +142,26 @@ export default class LatexDocumentProvider implements TextDocumentContentProvide
 
       this.update(Uri.file(path));
     }
+
+    if (data.type === "click") {
+      const path = this.getPathForClient(client);
+      const file = `${this.directories[path]}/preview.pdf`;
+
+      synctex.edit(Object.assign(data, { file }));
+    }
   }
 
   private onClientClose(closed: ws) {
-    for (const [path, client] of this.clients.entries()) {
-      if (closed === client) {
-        this.clients.delete(path);
-        this.listenForConnection(path);
+    const path = this.getPathForClient(closed);
 
-        return;
+    this.clients.delete(path);
+    this.listenForConnection(path);
+  }
+
+  private getPathForClient(client: ws): string {
+    for (const [path, candidate] of this.clients.entries()) {
+      if (client === candidate) {
+        return path;
       }
     }
   }

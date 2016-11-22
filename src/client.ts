@@ -3,8 +3,9 @@
 let path: string;
 let socket: WebSocket;
 
-let canvases = [];
-let pages = [];
+let canvases: HTMLCanvasElement[] = [];
+let pages: PDFPageProxy[] = [];
+let viewports: PDFPageViewport[] = [];
 
 document.addEventListener("DOMContentLoaded", () => {
   path = document.body.dataset["path"];
@@ -38,7 +39,11 @@ function loadAndRender(source: string) {
   return PDFJS.getDocument(source).then(async pdf => {
     // Ensure the right number of canvases.
     while (canvases.length < pdf.numPages) {
-      canvases.push(document.body.appendChild(document.createElement("canvas")));
+      const canvas = document.createElement("canvas");
+      canvas.onclick = onCanvasClick;
+      canvases.push(canvas);
+
+      document.body.appendChild(canvas);
     }
 
     while (canvases.length > pdf.numPages) {
@@ -58,9 +63,13 @@ function loadAndRender(source: string) {
 }
 
 function renderPages() {
+  viewports = [];
+
   for (let i = 0; i < pages.length; i++) {
     const scale = document.body.clientWidth / pages[i].getViewport(1).width;
     const viewport = pages[i].getViewport(scale);
+
+    viewports.push(viewport);
 
     const canvas = canvases[i];
     const canvasContext = canvas.getContext("2d");
@@ -72,13 +81,9 @@ function renderPages() {
   }
 }
 
-function getClickHandler(el: Element, page: number) {
-  return (e: MouseEvent) => {
-    socket.send(JSON.stringify({
-      type: "click",
-      page,
-      x: e.x / el.clientWidth,
-      y: e.y / el.clientHeight,
-    }));
-  };
+function onCanvasClick(e: MouseEvent) {
+  const page = canvases.indexOf(this) + 1;
+  const point = viewports[page - 1].convertToPdfPoint(e.x, e.y);
+
+  socket.send(JSON.stringify({ type: "click", page, x: point[0], y: point[1] }));
 }
