@@ -5,14 +5,6 @@ import * as tmp from "tmp";
 import { CancellationToken, ExtensionContext, Position, TextDocumentContentProvider, Uri, commands } from "vscode";
 import * as ws from "ws";
 
-// interface Preview {
-//   path: string;
-//   dir: string;
-//   connected: Promise<void>;
-//   connectedResolve: Function;
-//   client?: ws;
-// };
-
 /**
  * Provides preview content and creates a websocket server which communicates with the preview.
  */
@@ -93,7 +85,7 @@ export default class LatexDocumentProvider implements TextDocumentContentProvide
     }
 
     this.build(path, this.directories[path]).then(() => {
-      this.clients.get(path).send(JSON.stringify({ type: "update" }))
+      this.clients.get(path).send(JSON.stringify({ type: "update" }));
     });
   }
 
