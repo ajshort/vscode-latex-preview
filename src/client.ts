@@ -1,34 +1,30 @@
 /// <reference path="../node_modules/@types/pdf/index.d.ts" />
 
+let path: string;
 let socket: WebSocket;
 
 document.addEventListener("DOMContentLoaded", () => {
-  const tex = document.body.dataset["path"];
-  const pdf = document.body.dataset["pdf"];
-
-  loadAndRender(pdf);
-
+  path = document.body.dataset["path"];
   socket = new WebSocket(document.body.dataset["websocket"]);
 
   socket.addEventListener("open", () => {
-    socket.send(JSON.stringify({ type: "open", path: tex }));
+    socket.send(JSON.stringify({ type: "open", path }));
   });
 
   socket.addEventListener("message", event => {
     const data = JSON.parse(event.data);
 
     if (data.type === "update") {
-      loadAndRender(pdf);
+      loadAndRender(data.path);
     }
 
     if (data.type === "show") {
-      // TODO
     }
   });
 });
 
-function loadAndRender(path: string) {
-  return PDFJS.getDocument(path).then(render);
+function loadAndRender(pdf: string) {
+  return PDFJS.getDocument(pdf).then(render);
 }
 
 function render(pdf: PDFDocumentProxy) {

@@ -49,16 +49,13 @@ export default class LatexDocumentProvider implements TextDocumentContentProvide
   public async provideTextDocumentContent(uri: Uri, token: CancellationToken): Promise<string> {
     await this.listening;
 
-    // Create a working dir and being listening.
+    // Create a working dir and start listening.
     const path = uri.fsPath;
-    const dir = await this.createTempDir();
 
-    this.directories[path] = dir;
+    this.directories[path] = await this.createTempDir();
     this.listenForConnection(path);
 
-    // Build the PDF and generate the preview document.
-    const pdf = await this.build(path, dir);
-
+    // Generate the document content.
     const { address, port } = this.http.address();
     const ws = `ws://${address}:${port}`;
 
@@ -72,7 +69,7 @@ export default class LatexDocumentProvider implements TextDocumentContentProvide
       <script src="${this.getResourcePath("node_modules/pdfjs-dist/build/pdf.worker.js")}"></script>
       <script src="${this.getResourcePath("out/src/client.js")}"></script>
     </head>
-    <body class="preview" data-path="${attr(path)}" data-websocket="${attr(ws)}" data-pdf="${attr(pdf)}">
+    <body class="preview" data-path="${attr(path)}" data-websocket="${attr(ws)}">
     </body>
     </html>`;
   }
@@ -84,8 +81,8 @@ export default class LatexDocumentProvider implements TextDocumentContentProvide
       return;
     }
 
-    this.build(path, this.directories[path]).then(() => {
-      this.clients.get(path).send(JSON.stringify({ type: "update" }));
+    this.build(path, this.directories[path]).then(pdf => {
+      this.clients.get(path).send(JSON.stringify({ type: "update", path: pdf }));
     });
   }
 
@@ -142,6 +139,8 @@ export default class LatexDocumentProvider implements TextDocumentContentProvide
 
       this.clients.set(path, client);
       this.connectedResolve.get(path)();
+
+      this.update(Uri.file(path));
     }
   }
 
@@ -150,6 +149,7 @@ export default class LatexDocumentProvider implements TextDocumentContentProvide
       if (closed === client) {
         this.clients.delete(path);
         this.listenForConnection(path);
+
         return;
       }
     }
