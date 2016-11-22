@@ -3,6 +3,9 @@
 let path: string;
 let socket: WebSocket;
 
+let canvases = [];
+let pages = [];
+
 document.addEventListener("DOMContentLoaded", () => {
   path = document.body.dataset["path"];
   socket = new WebSocket(document.body.dataset["websocket"]);
@@ -21,46 +24,52 @@ document.addEventListener("DOMContentLoaded", () => {
     if (data.type === "show") {
     }
   });
+
+  // Re-render pages on resize.
+  let timeout: NodeJS.Timer;
+
+  window.onresize = () => {
+    clearTimeout(timeout);
+    timeout = setTimeout(renderPages, 200);
+  };
 });
 
-function loadAndRender(pdf: string) {
-  return PDFJS.getDocument(pdf).then(render);
+function loadAndRender(source: string) {
+  return PDFJS.getDocument(source).then(async pdf => {
+    // Ensure the right number of canvases.
+    while (canvases.length < pdf.numPages) {
+      canvases.push(document.body.appendChild(document.createElement("canvas")));
+    }
+
+    while (canvases.length > pdf.numPages) {
+      canvases.pop().remove();
+    }
+
+    // Create the page objects.
+    pages = [];
+
+    for (let i = 1; i <= pdf.numPages; i++) {
+      pages.push(await pdf.getPage(i));
+    }
+
+    // Draw the pages.
+    renderPages();
+  });
 }
 
-function render(pdf: PDFDocumentProxy) {
-  let canvases = document.getElementsByTagName("canvas");
+function renderPages() {
+  for (let i = 0; i < pages.length; i++) {
+    const scale = document.body.clientWidth / pages[i].getViewport(1).width;
+    const viewport = pages[i].getViewport(scale);
 
-  // Ensure we have the right number of canvases.
-  for (let i = canvases.length; i < pdf.numPages; i++) {
-    const canvas = document.createElement("canvas");
-    canvas.addEventListener("click", getClickHandler(canvas, i + 1));
-    document.body.appendChild(canvas);
-  }
+    const canvas = canvases[i];
+    const canvasContext = canvas.getContext("2d");
 
-  for (let i = canvases.length; i > pdf.numPages; i--) {
-    canvases[i - 1].remove();
-  }
-
-  canvases = document.getElementsByTagName("canvas");
-
-  // Render the pages.
-  const draw = (i: number) => pdf.getPage(i).then(page => {
-    const viewport = page.getViewport(document.body.clientWidth / page.getViewport(1).width);
-
-    const canvas = canvases[i - 1];
-    const canvasContext = canvases[i - 1].getContext("2d");
-
-    canvas.height = viewport.height;
     canvas.width = viewport.width;
+    canvas.height = viewport.height;
 
-    page.render({ canvasContext, viewport });
-
-    if (i < pdf.numPages) {
-      draw(i + 1);
-    }
-  });
-
-  draw(1);
+    pages[i].render({ viewport, canvasContext });
+  }
 }
 
 function getClickHandler(el: Element, page: number) {
