@@ -1,52 +1,63 @@
 import * as synctex from "./synctex";
 import * as cp from "child_process";
 import * as http from "http";
-import { join } from "path";
 import * as tmp from "tmp";
 import { CancellationToken, ExtensionContext, Position, TextDocumentContentProvider, Uri, commands } from "vscode";
 import * as ws from "ws";
 
+interface Preview {
+  path: string;
+  dir: string;
+  connected: Promise<void>;
+  connectedResolve: Function;
+  client?: ws;
+};
+
+/**
+ * Provides preview content and creates a websocket server which communicates with the preview.
+ */
 export default class LatexDocumentProvider implements TextDocumentContentProvider {
   private http: http.Server;
-  private websocket: ws.Server;
+  private server: ws.Server;
   private listening: Promise<void>;
 
-  private dirs: { [uri: string]: string } = {};
+  private previews: Preview[] = [];
 
   constructor(private context: ExtensionContext) {
     this.http = http.createServer();
+    this.server = ws.createServer({ server: this.http });
+
     this.listening = new Promise((c, e) => {
       this.http.listen(0, "localhost", undefined, err => err ? e(err) : c());
     });
 
-    this.websocket = ws.createServer({ server: this.http });
-    this.websocket.on("connection", client => {
-      client.on("message", data => {
-        console.log(data);
-      });
+    this.server.on("connection", client => {
+      client.on("message", this.onClientMessage.bind(this, client));
+      client.on("close", this.onClientClose.bind(this, client));
     });
   }
 
   public dispose() {
-    this.websocket.close();
-  }
-
-  /**
-   * Returns whether a document has been opened in a preview view.
-   */
-  public isPreviewing(uri: Uri): boolean {
-    return uri.fsPath in this.dirs;
+    this.server.close();
   }
 
   public async provideTextDocumentContent(uri: Uri, token: CancellationToken): Promise<string> {
     await this.listening;
 
-    // Create a temp dir for the preview.
-    this.dirs[uri.fsPath] = await new Promise<string>((c, e) => {
-      tmp.dir({ unsafeCleanup: true }, (err, path) => err ? e(err) : c(path));
-    });
+    // Create a new preview instance.
+    const preview = <Preview> {
+      path: uri.fsPath,
+      dir: await this.createTempDir(),
+      connected: null,
+      connectedResolve: null,
+    };
 
-    const preview = await this.build(uri);
+    preview.connected = new Promise(c => preview.connectedResolve = c);
+
+    this.previews.push(preview);
+
+    // Build the PDF and generate the preview document.
+    const pdf = await this.build(preview.path, preview.dir);
 
     const { address, port } = this.http.address();
     const ws = `ws://${address}:${port}`;
@@ -55,73 +66,105 @@ export default class LatexDocumentProvider implements TextDocumentContentProvide
     <!DOCTYPE html>
     <html>
     <head>
-      <link rel="stylesheet" href="${this.getPath("media/style.css")}">
+      <link rel="stylesheet" href="${this.getResourcePath("media/style.css")}">
 
-      <script src="${this.getModulePath("pdfjs-dist/build/pdf.js")}"></script>
-      <script src="${this.getModulePath("pdfjs-dist/build/pdf.worker.js")}"></script>
-      <script src="${this.getPath("out/src/client.js")}"></script>
+      <script src="${this.getResourcePath("node_modules/pdfjs-dist/build/pdf.js")}"></script>
+      <script src="${this.getResourcePath("node_modules/pdfjs-dist/build/pdf.worker.js")}"></script>
+      <script src="${this.getResourcePath("out/src/client.js")}"></script>
     </head>
-    <body class="preview" data-websocket="${attr(ws)}" data-pdf="${attr(preview.toString())}">
+    <body class="preview" data-path="${attr(preview.path)}" data-websocket="${attr(ws)}" data-pdf="${attr(pdf)}">
     </body>
     </html>`;
   }
 
   public async update(uri: Uri) {
-    if (!this.isPreviewing(uri)) {
+    const preview = this.getPreview(uri.fsPath);
+
+    if (typeof preview === "undefined") {
       return;
     }
 
-    const preview = await this.build(uri);
-
-    for (const client of this.websocket.clients) {
-      client.send(JSON.stringify({ type: "update", uri: preview.toString() }));
-    }
+    await this.build(preview.path, preview.dir);
+    preview.client.send(JSON.stringify({ type: "update" }));
   }
 
   /**
    * Shows a text editor position in the preview.
    */
   public async showPosition(uri: Uri, position: Position) {
-    if (!this.isPreviewing(uri)) {
+    let preview = this.getPreview(uri.fsPath);
+
+    if (typeof preview === "undefined") {
       await commands.executeCommand("latex-preview.showPreview", uri);
+      preview = this.getPreview(uri.fsPath);
     }
 
+    // Make sure the client is connected.
+    await preview.connected;
+
+    // Get the position.
     const rects = await synctex.view({
       line: position.line + 1,
       column: position.character + 1,
-      input: uri.fsPath,
-      output: join(this.dirs[uri.fsPath], "preview.pdf"),
+      input: preview.path,
+      output: `${preview.dir}/preview.pdf`,
     });
 
     if (rects.length === 0) {
       return;
     }
 
-    for (const client of this.websocket.clients) {
-      client.send(JSON.stringify({ type: "show", rect: rects[0] }));
-    }
+    preview.client.send(JSON.stringify({ type: "show", rect: rects[0] }));
   }
 
   /**
-   * Builds a PDF and returns the URI to it.
+   * Gets the preview object for a tex file path.
    */
-  private build(uri: Uri): Promise<Uri> {
-    const path = uri.fsPath;
-    const cwd = this.dirs[uri.fsPath];
+  private getPreview(path: string): Preview {
+    return this.previews.find(preview => preview.path === path);
+  }
 
+  /**
+   * Builds a PDF and returns the path to it.
+   */
+  private build(path: string, cwd: string): Promise<string> {
     return new Promise((resolve, reject) => {
       cp.exec(`pdflatex -jobname=preview -synctex=1 -interaction=nonstopmode ${arg(path)}`, { cwd }, (err, out) =>
-        err ? reject(err) : resolve(Uri.file(join(cwd, "preview.pdf")))
+        err ? reject(err) : resolve(`${cwd}/preview.pdf`)
       );
     });
   }
 
-  private getPath(file: string): string {
-    return this.context.asAbsolutePath(file);
+  private onClientMessage(client: ws, message: any) {
+    const data = JSON.parse(message);
+
+    if (data.type === "open") {
+      const preview = this.getPreview(data.path);
+      preview.client = client;
+      preview.connectedResolve();
+    }
   }
 
-  private getModulePath(file: string): string {
-    return this.context.asAbsolutePath(join("node_modules", file));
+  private onClientClose(client: ws) {
+    for (let i = 0; i < this.previews.length; i++) {
+      if (this.previews[i].client === client) {
+        this.previews.splice(i, 1);
+        return;
+      }
+    }
+  }
+
+  /**
+   * Creates a new temporary directory.
+   */
+  private createTempDir(): Promise<string> {
+    return new Promise((c, e) => {
+      tmp.dir({ unsafeCleanup: true }, (err, dir) => err ? e(err) : c(dir));
+    });
+  }
+
+  private getResourcePath(file: string): string {
+    return this.context.asAbsolutePath(file);
   }
 }
 

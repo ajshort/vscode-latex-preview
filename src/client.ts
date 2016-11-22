@@ -3,21 +3,32 @@
 let socket: WebSocket;
 
 document.addEventListener("DOMContentLoaded", () => {
-  const uri = document.body.dataset["pdf"];
-  loadAndRender(uri);
+  const tex = document.body.dataset["path"];
+  const pdf = document.body.dataset["pdf"];
+
+  loadAndRender(pdf);
 
   socket = new WebSocket(document.body.dataset["websocket"]);
+
+  socket.addEventListener("open", () => {
+    socket.send(JSON.stringify({ type: "open", path: tex }));
+  });
+
   socket.addEventListener("message", event => {
     const data = JSON.parse(event.data);
 
-    if (data.type === "update" && data.uri === uri) {
-      loadAndRender(uri);
+    if (data.type === "update") {
+      loadAndRender(pdf);
+    }
+
+    if (data.type === "show") {
+      // TODO
     }
   });
 });
 
-function loadAndRender(uri: string) {
-  return PDFJS.getDocument(uri).then(render);
+function loadAndRender(path: string) {
+  return PDFJS.getDocument(path).then(render);
 }
 
 function render(pdf: PDFDocumentProxy) {
