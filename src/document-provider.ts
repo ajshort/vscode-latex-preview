@@ -2,7 +2,8 @@ import * as synctex from "./synctex";
 import * as cp from "child_process";
 import * as http from "http";
 import * as tmp from "tmp";
-import { CancellationToken, ExtensionContext, Position, TextDocumentContentProvider, Uri, commands } from "vscode";
+import { CancellationToken, ExtensionContext, Position, Selection, TextDocumentContentProvider, Uri, commands, window,
+         workspace } from "vscode";
 import * as ws from "ws";
 
 /**
@@ -144,11 +145,26 @@ export default class LatexDocumentProvider implements TextDocumentContentProvide
     }
 
     if (data.type === "click") {
-      const path = this.getPathForClient(client);
-      const file = `${this.directories[path]}/preview.pdf`;
-
-      synctex.edit(Object.assign(data, { file }));
+      this.onClientClick(client, data);
     }
+  }
+
+  private async onClientClick(client: ws, data: any) {
+    const path = this.getPathForClient(client);
+    const file = `${this.directories[path]}/preview.pdf`;
+
+    const location = await synctex.edit(Object.assign(data, { file }));
+
+    if (!location) {
+      return;
+    }
+
+    const character = (location.column > 0) ? location.column - 1 : 0;
+    const position = new Position(location.line - 1, character);
+
+    const document = await workspace.openTextDocument(location.input);
+    const editor = await window.showTextDocument(document);
+    editor.selection = new Selection(position, position);
   }
 
   private onClientClose(closed: ws) {
