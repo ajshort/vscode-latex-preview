@@ -30,6 +30,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     if (data.type === "show") {
+      const rect = data.rect;
+      const offset = canvases[rect.page - 1].offsetTop;
+      const position = viewports[rect.page - 1].convertToViewportPoint(rect.x, rect.y)[1];
+
+      window.scrollTo(0, offset + position);
     }
   });
 

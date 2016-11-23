@@ -24,29 +24,12 @@ export function view(opts: ViewOptions): Promise<any[]> {
 
   return new Promise((resolve, reject) => {
     cp.exec(args.join(" "), (err, out) => {
+      const foo = args.join(" ");
       if (err) {
-        return reject(err);
+        reject(err);
+      } else {
+        resolve(parse(out));
       }
-
-      let rects = [];
-      let rect: any;
-
-      for (const line of out.split("\n")) {
-        const [key, val] = line.split(":", 2);
-
-        if (typeof val === "undefined") {
-          continue;
-        }
-
-        if (key === "Page") {
-          rect = { page: parseInt(val, 10) };
-          rects.push(rect);
-        } else if (["x", "y", "W", "H"].indexOf(key) !== -1) {
-          rect[key] = parseFloat(val);
-        }
-      }
-
-      resolve(rects);
     });
   });
 }
