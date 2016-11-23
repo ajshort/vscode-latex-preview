@@ -17,6 +17,9 @@
     "Languages",
     "Productivity"
   ],
+  "keywords": [
+    "latex", "tex", "preview"
+  ],
   "activationEvents": [
     "onCommand:latex-preview.createBuildTask",
     "onCommand:latex-preview.showPreview",
