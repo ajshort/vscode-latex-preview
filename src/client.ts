@@ -8,6 +8,8 @@ let pages: PDFPageProxy[] = [];
 let viewports: PDFPageViewport[] = [];
 
 document.addEventListener("DOMContentLoaded", () => {
+  const error = document.getElementById("error-indicator");
+
   path = document.body.dataset["path"];
   socket = new WebSocket(document.body.dataset["websocket"]);
 
@@ -19,7 +21,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const data = JSON.parse(event.data);
 
     if (data.type === "update") {
+      error.style.display = "none";
       loadAndRender(data.path);
+    }
+
+    if (data.type === "error") {
+      error.style.display = "block";
     }
 
     if (data.type === "show") {

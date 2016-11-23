@@ -2,3 +2,14 @@
   cursor: crosshair;
   width: 100%;
 }
+
+.preview #error-indicator {
+  display: none;
+  color: red;
+  font-size: 4em;
+  font-weight: bold;
+  text-shadow: 0 0 0.1em #666;
+  position: fixed;
+  top: 0.5em;
+  right: 0.5em;
+}

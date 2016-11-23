@@ -1,9 +1,10 @@
+import * as constants from "./constants";
 import * as synctex from "./synctex";
 import * as cp from "child_process";
 import * as http from "http";
 import * as tmp from "tmp";
-import { CancellationToken, ExtensionContext, Position, Selection, TextDocumentContentProvider, Uri, commands, window,
-         workspace } from "vscode";
+import { CancellationToken, Diagnostic, DiagnosticCollection, DiagnosticSeverity, ExtensionContext, Position, Range,
+         Selection, TextDocumentContentProvider, Uri, commands, languages, window, workspace } from "vscode";
 import * as ws from "ws";
 
 /**
@@ -19,6 +20,8 @@ export default class LatexDocumentProvider implements TextDocumentContentProvide
   private connected = new Map<string, Promise<void>>();
   private connectedResolve = new Map<string, Function>();
 
+  private diagnostics: DiagnosticCollection;
+
   constructor(private context: ExtensionContext) {
     this.http = http.createServer();
     this.server = ws.createServer({ server: this.http });
@@ -31,10 +34,13 @@ export default class LatexDocumentProvider implements TextDocumentContentProvide
       client.on("message", this.onClientMessage.bind(this, client));
       client.on("close", this.onClientClose.bind(this, client));
     });
+
+    this.diagnostics = languages.createDiagnosticCollection("LaTeX Preview");
   }
 
   public dispose() {
     this.server.close();
+    this.diagnostics.dispose();
   }
 
   /**
@@ -71,6 +77,7 @@ export default class LatexDocumentProvider implements TextDocumentContentProvide
       <script src="${this.getResourcePath("out/src/client.js")}"></script>
     </head>
     <body class="preview" data-path="${attr(path)}" data-websocket="${attr(ws)}">
+      <div id="error-indicator">⚠</div>
     </body>
     </html>`;
   }
@@ -82,9 +89,10 @@ export default class LatexDocumentProvider implements TextDocumentContentProvide
       return;
     }
 
-    this.build(path, this.directories[path]).then(pdf => {
-      this.clients.get(path).send(JSON.stringify({ type: "update", path: pdf }));
-    });
+    this.build(path, this.directories[path])
+      .then(pdf => ({ type: "update", path: pdf }))
+      .catch(() => ({ type: "error" }))
+      .then(data => this.clients.get(path).send(JSON.stringify(data)));
   }
 
   /**
@@ -119,10 +127,31 @@ export default class LatexDocumentProvider implements TextDocumentContentProvide
    * Builds a PDF and returns the path to it.
    */
   private build(path: string, cwd: string): Promise<string> {
+    const command = `pdflatex -jobname=preview -synctex=1 -interaction=nonstopmode -file-line-error ${arg(path)}`;
+
     return new Promise((resolve, reject) => {
-      cp.exec(`pdflatex -jobname=preview -synctex=1 -interaction=nonstopmode ${arg(path)}`, { cwd }, (err, out) =>
-        err ? reject(err) : resolve(`${cwd}/preview.pdf`)
-      );
+      cp.exec(command, { cwd }, (err, out) => {
+        this.diagnostics.clear();
+
+        if (err) {
+          let regexp = new RegExp(constants.ERROR_REGEX, "gm");
+          let entries: [Uri, Diagnostic[]][] = [];
+          let matches: RegExpExecArray;
+
+          while ((matches = regexp.exec(out)) != null) {
+            const line = parseInt(matches[2], 10) - 1;
+            const range = new Range(line, 0, line, Number.MAX_VALUE);
+
+            entries.push([Uri.file(matches[1]), [new Diagnostic(range, matches[3], DiagnosticSeverity.Error)]]);
+          }
+
+          this.diagnostics.set(entries);
+
+          reject(err);
+        } else {
+          resolve(`${cwd}/preview.pdf`);
+        }
+      });
     });
   }
 
