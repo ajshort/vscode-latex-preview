@@ -127,7 +127,8 @@ export default class LatexDocumentProvider implements TextDocumentContentProvide
    * Builds a PDF and returns the path to it.
    */
   private build(path: string, cwd: string): Promise<string> {
-    const command = `pdflatex -jobname=preview -synctex=1 -interaction=nonstopmode -file-line-error ${arg(path)}`;
+    let command = workspace.getConfiguration().get(constants.CONFIG_COMMAND, "pdflatex");
+    command = `${command} -jobname=preview -synctex=1 -interaction=nonstopmode -file-line-error ${arg(path)}`;
 
     return new Promise((resolve, reject) => {
       cp.exec(command, { cwd }, (err, out) => {

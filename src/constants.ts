@@ -8,3 +8,5 @@ export const COMMAND_SHOW_PREVIEW = "latex-preview.showPreview";
 export const COMMAND_SHOW_PREVIEW_TO_SIDE = "latex-preview.showPreviewToSide";
 export const COMMAND_SHOW_IN_PREVIEW = "latex-preview.showInPreview";
 export const COMMAND_SHOW_SOURCE = "latex-preview.showSource";
+
+export const CONFIG_COMMAND = "latex-preview.command";

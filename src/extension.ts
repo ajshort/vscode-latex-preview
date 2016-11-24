@@ -41,7 +41,7 @@ async function createBuildTask() {
 
   workspace.getConfiguration().update("tasks", {
     version: "0.1.0",
-    command: "pdflatex",
+    command: workspace.getConfiguration().get(constants.CONFIG_COMMAND, "pdflatex"),
     isShellCommand: true,
     args: ["-interaction=nonstopmode", "-file-line-error", file],
     showOutput: "silent",

@@ -28,6 +28,17 @@
   ],
   "main": "./out/src/extension",
   "contributes": {
+    "configuration": {
+      "type": "object",
+      "title": "Latex Preview",
+      "properties": {
+        "latex-preview.command": {
+          "type": "string",
+          "description": "The LaTeX command to use (pdflatex, xelatex, ...)",
+          "default": "pdflatex"
+        }
+      }
+    },
     "commands": [
       {
         "command": "latex-preview.createBuildTask",

@@ -24,7 +24,6 @@ export function view(opts: ViewOptions): Promise<any[]> {
 
   return new Promise((resolve, reject) => {
     cp.exec(args.join(" "), (err, out) => {
-      const foo = args.join(" ");
       if (err) {
         reject(err);
       } else {
