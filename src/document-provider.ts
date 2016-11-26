@@ -2,6 +2,7 @@ import * as constants from "./constants";
 import * as synctex from "./synctex";
 import * as cp from "child_process";
 import * as http from "http";
+import { dirname } from "path";
 import * as tmp from "tmp";
 import { CancellationToken, Diagnostic, DiagnosticCollection, DiagnosticSeverity, ExtensionContext, Position, Range,
          Selection, TextDocumentContentProvider, Uri, commands, languages, window, workspace } from "vscode";
@@ -135,12 +136,21 @@ export default class LatexDocumentProvider implements TextDocumentContentProvide
   /**
    * Builds a PDF and returns the path to it.
    */
-  private build(path: string, cwd: string): Promise<string> {
-    let command = workspace.getConfiguration().get(constants.CONFIG_COMMAND, "pdflatex");
-    command = `${command} -jobname=preview -synctex=1 -interaction=nonstopmode -file-line-error ${arg(path)}`;
+  private build(path: string, dir: string): Promise<string> {
+    const executable = workspace.getConfiguration().get(constants.CONFIG_COMMAND, "pdflatex");
+
+    const command = [
+      executable,
+      "-jobname=preview",
+      "-synctex=1",
+      "-interaction=nonstopmode",
+      "-file-line-error",
+      `-output-dir=${arg(dir)}`,
+      arg(path),
+    ].join(" ");
 
     return new Promise((resolve, reject) => {
-      cp.exec(command, { cwd }, (err, out) => {
+      cp.exec(command, { cwd: dirname(path) }, (err, out) => {
         this.diagnostics.clear();
 
         if (err) {
@@ -159,7 +169,7 @@ export default class LatexDocumentProvider implements TextDocumentContentProvide
 
           reject(err);
         } else {
-          resolve(`${cwd}/preview.pdf`);
+          resolve(`${dir}/preview.pdf`);
         }
       });
     });
