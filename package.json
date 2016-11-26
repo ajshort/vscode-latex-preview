@@ -2,7 +2,7 @@
   "name": "latex-preview",
   "displayName": "LaTeX Preview",
   "description": "Compilation and embedded preview of LaTeX documents",
-  "icon": "media/icon.svg",
+  "icon": "media/icon.png",
   "version": "0.1.0",
   "publisher": "ajshort",
   "license": "MIT",
