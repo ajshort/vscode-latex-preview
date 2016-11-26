@@ -7,8 +7,11 @@ let canvases: HTMLCanvasElement[] = [];
 let pages: PDFPageProxy[] = [];
 let viewports: PDFPageViewport[] = [];
 
+let zoom = 1.0;
+let zoomInput: HTMLInputElement;
+
 document.addEventListener("DOMContentLoaded", () => {
-  const error = document.getElementById("error-indicator");
+  const error = document.getElementById("compile-error");
 
   path = document.body.dataset["path"];
   socket = new WebSocket(document.body.dataset["websocket"]);
@@ -45,6 +48,17 @@ document.addEventListener("DOMContentLoaded", () => {
     clearTimeout(timeout);
     timeout = setTimeout(renderPages, 200);
   };
+
+  // Zoom handlers.
+  zoomInput = <HTMLInputElement> document.getElementById("zoom-input");
+
+  document.getElementById("zoom-in").onclick = getOnZoomClick(0.25);
+  document.getElementById("zoom-out").onclick = getOnZoomClick(-0.25);
+
+  zoomInput.onchange = () => {
+    zoom = zoomInput.valueAsNumber / 100;
+    renderPages();
+  };
 });
 
 function loadAndRender(source: string) {
@@ -78,7 +92,7 @@ function renderPages() {
   viewports = [];
 
   for (let i = 0; i < pages.length; i++) {
-    const scale = document.body.clientWidth / pages[i].getViewport(1).width;
+    const scale = zoom * document.body.clientWidth / pages[i].getViewport(1).width;
     const viewport = pages[i].getViewport(scale);
 
     viewports.push(viewport);
@@ -98,4 +112,12 @@ function onCanvasClick(e: MouseEvent) {
   const point = viewports[page - 1].convertToPdfPoint(e.x, e.y);
 
   socket.send(JSON.stringify({ type: "click", page, x: point[0], y: point[1] }));
+}
+
+function getOnZoomClick(change: number) {
+  return () => {
+    zoom = zoom + change;
+    zoomInput.value = (100 * zoom).toString();
+    renderPages();
+  };
 }

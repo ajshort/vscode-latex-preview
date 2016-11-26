@@ -1,15 +1,63 @@
-.preview canvas {
-  cursor: crosshair;
-  width: 100%;
+body {
+  font-family: "Segoe WPC", "Segoe UI", "SFUIText-Light", "HelveticaNeue-Light", sans-serif;
 }
 
-.preview #error-indicator {
-  display: none;
-  color: red;
-  font-size: 4em;
-  font-weight: bold;
-  text-shadow: 0 0 0.1em #666;
+canvas {
+  cursor: crosshair;
+}
+
+#zoom {
+  background: #1e1e1e;
+  border: 1px solid #403F3F;
+  box-shadow: 0 0 15px #AAA;
+  float: left;
+  left: 15px;
+  line-height: 20px;
+  padding: 6px;
   position: fixed;
-  top: 0.5em;
-  right: 0.5em;
+  top: 15px;
+}
+
+#zoom .icon {
+  color: #DDD;
+  font-weight: bold;
+  padding-right: 5px;
+}
+
+#zoom input {
+  background: #3C3C3C;
+  border: 1px solid #3C3C3C;
+  color: #CCC;
+  width: 60px;
+}
+
+#zoom button {
+  background: #007ACC;
+  border: 1px solid #3F8BCE;
+  cursor: pointer;
+  display: inline-block;
+  color: #FFF;
+  font-weight: bold;
+  height: 20px;
+  margin-left: 2px;
+  padding: 0;
+  text-align: center;
+  text-decoration: none;
+  width: 20px;
+}
+
+#zoom button:focus, #zoom button:hover {
+  background-color: #3F8BCE;
+}
+
+#compile-error {
+  background: #A94442;
+  box-shadow: 0 0 15px #AAA;
+  color: #FFF;
+  display: none;
+  font-weight: bold;
+  padding:10px;
+  position: fixed;
+  right: 15px;
+  top: 15px;
 }

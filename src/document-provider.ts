@@ -77,7 +77,16 @@ export default class LatexDocumentProvider implements TextDocumentContentProvide
       <script src="${this.getResourcePath("out/src/client.js")}"></script>
     </head>
     <body class="preview" data-path="${attr(path)}" data-websocket="${attr(ws)}">
-      <div id="error-indicator">⚠</div>
+      <div id="zoom">
+        <span class="icon">🔎</span>
+        <input id="zoom-input" type="number" value="100" min="0" />
+        <button id="zoom-in">➕</a>
+        <button id="zoom-out">➖</a>
+      </div>
+
+      <div id="compile-error">
+        ⚠ error compiling preview
+      </div>
     </body>
     </html>`;
   }
