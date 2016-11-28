@@ -59,6 +59,11 @@ document.addEventListener("DOMContentLoaded", () => {
     zoom = zoomInput.valueAsNumber / 100;
     renderPages();
   };
+
+  // Show output when click on error.
+  error.addEventListener("click", () => {
+    socket.send(JSON.stringify({ type: "showOutput" }));
+  });
 });
 
 function loadAndRender(source: string) {

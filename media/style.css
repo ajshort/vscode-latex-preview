@@ -62,6 +62,6 @@ canvas {
   top: 15px;
 }
 
-#compile-error:focus, compile-error:hover {
-  
+#compile-error:focus, #compile-error:hover {
+  background: #76110F;
 }

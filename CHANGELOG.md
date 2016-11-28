@@ -3,6 +3,7 @@
 # Master
 
 * Show compile output in a "LaTeX Preview" output channel.
+* Show compile output when compile error clicked.
 
 # 0.2.1
 

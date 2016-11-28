@@ -210,6 +210,10 @@ export default class LatexDocumentProvider implements vscode.TextDocumentContent
     if (data.type === "click") {
       this.onClientClick(client, data);
     }
+
+    if (data.type === "showOutput") {
+      this.showOutputChannel();
+    }
   }
 
   private async onClientClick(client: ws, data: any) {
