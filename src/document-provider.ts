@@ -4,14 +4,13 @@ import * as cp from "child_process";
 import * as http from "http";
 import { dirname } from "path";
 import * as tmp from "tmp";
-import { CancellationToken, Diagnostic, DiagnosticCollection, DiagnosticSeverity, ExtensionContext, Position, Range,
-         Selection, TextDocumentContentProvider, Uri, commands, languages, window, workspace } from "vscode";
+import * as vscode from "vscode";
 import * as ws from "ws";
 
 /**
  * Provides preview content and creates a websocket server which communicates with the preview.
  */
-export default class LatexDocumentProvider implements TextDocumentContentProvider {
+export default class LatexDocumentProvider implements vscode.TextDocumentContentProvider {
   private http: http.Server;
   private server: ws.Server;
   private listening: Promise<void>;
@@ -21,9 +20,9 @@ export default class LatexDocumentProvider implements TextDocumentContentProvide
   private connected = new Map<string, Promise<void>>();
   private connectedResolve = new Map<string, Function>();
 
-  private diagnostics: DiagnosticCollection;
+  private diagnostics: vscode.DiagnosticCollection;
 
-  constructor(private context: ExtensionContext) {
+  constructor(private context: vscode.ExtensionContext) {
     this.http = http.createServer();
     this.server = ws.createServer({ server: this.http });
 
@@ -36,7 +35,7 @@ export default class LatexDocumentProvider implements TextDocumentContentProvide
       client.on("close", this.onClientClose.bind(this, client));
     });
 
-    this.diagnostics = languages.createDiagnosticCollection("LaTeX Preview");
+    this.diagnostics = vscode.languages.createDiagnosticCollection("LaTeX Preview");
   }
 
   public dispose() {
@@ -54,7 +53,7 @@ export default class LatexDocumentProvider implements TextDocumentContentProvide
   /**
    * Creates a working dir and returns client HTML.
    */
-  public async provideTextDocumentContent(uri: Uri, token: CancellationToken): Promise<string> {
+  public async provideTextDocumentContent(uri: vscode.Uri, token: vscode.CancellationToken): Promise<string> {
     await this.listening;
 
     // Create a working dir and start listening.
@@ -92,7 +91,7 @@ export default class LatexDocumentProvider implements TextDocumentContentProvide
     </html>`;
   }
 
-  public update(uri: Uri) {
+  public update(uri: vscode.Uri) {
     const path = uri.fsPath;
 
     if (!this.isPreviewing(path)) {
@@ -108,11 +107,11 @@ export default class LatexDocumentProvider implements TextDocumentContentProvide
   /**
    * Shows a text editor position in the preview.
    */
-  public async showPosition(uri: Uri, position: Position) {
+  public async showPosition(uri: vscode.Uri, position: vscode.Position) {
     const path = uri.fsPath;
 
     if (!this.isPreviewing(path)) {
-      await commands.executeCommand("latex-preview.showPreview", uri);
+      await vscode.commands.executeCommand("latex-preview.showPreview", uri);
     }
 
     // Make sure the client is connected.
@@ -137,7 +136,7 @@ export default class LatexDocumentProvider implements TextDocumentContentProvide
    * Builds a PDF and returns the path to it.
    */
   private build(path: string, dir: string): Promise<string> {
-    const executable = workspace.getConfiguration().get(constants.CONFIG_COMMAND, "pdflatex");
+    const executable = vscode.workspace.getConfiguration().get(constants.CONFIG_COMMAND, "pdflatex");
 
     const command = [
       executable,
@@ -155,14 +154,17 @@ export default class LatexDocumentProvider implements TextDocumentContentProvide
 
         if (err) {
           let regexp = new RegExp(constants.ERROR_REGEX, "gm");
-          let entries: [Uri, Diagnostic[]][] = [];
+          let entries = [];
           let matches: RegExpExecArray;
 
           while ((matches = regexp.exec(out)) != null) {
             const line = parseInt(matches[2], 10) - 1;
-            const range = new Range(line, 0, line, Number.MAX_VALUE);
+            const range = new vscode.Range(line, 0, line, Number.MAX_VALUE);
 
-            entries.push([Uri.file(matches[1]), [new Diagnostic(range, matches[3], DiagnosticSeverity.Error)]]);
+            entries.push([
+              vscode.Uri.file(matches[1]),
+              [new vscode.Diagnostic(range, matches[3], vscode.DiagnosticSeverity.Error)],
+            ]);
           }
 
           this.diagnostics.set(entries);
@@ -190,7 +192,7 @@ export default class LatexDocumentProvider implements TextDocumentContentProvide
       this.clients.set(path, client);
       this.connectedResolve.get(path)();
 
-      this.update(Uri.file(path));
+      this.update(vscode.Uri.file(path));
     }
 
     if (data.type === "click") {
@@ -209,11 +211,11 @@ export default class LatexDocumentProvider implements TextDocumentContentProvide
     }
 
     const character = (location.column > 0) ? location.column - 1 : 0;
-    const position = new Position(location.line - 1, character);
+    const position = new vscode.Position(location.line - 1, character);
 
-    const document = await workspace.openTextDocument(location.input);
-    const editor = await window.showTextDocument(document);
-    editor.selection = new Selection(position, position);
+    const document = await vscode.workspace.openTextDocument(location.input);
+    const editor = await vscode.window.showTextDocument(document);
+    editor.selection = new vscode.Selection(position, position);
   }
 
   private onClientClose(closed: ws) {
