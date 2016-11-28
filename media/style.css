@@ -9,7 +9,6 @@ canvas {
 #zoom {
   background: #1e1e1e;
   border: 1px solid #403F3F;
-  box-shadow: 0 0 15px #AAA;
   float: left;
   left: 15px;
   line-height: 20px;
@@ -52,12 +51,17 @@ canvas {
 
 #compile-error {
   background: #A94442;
-  box-shadow: 0 0 15px #AAA;
+  border: 1px solid #76110F;
   color: #FFF;
+  cursor: pointer;
   display: none;
   font-weight: bold;
   padding:10px;
   position: fixed;
   right: 15px;
   top: 15px;
+}
+
+#compile-error:focus, compile-error:hover {
+  
 }
