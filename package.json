@@ -64,6 +64,11 @@
         "command": "latex-preview.showSource",
         "category": "LaTeX",
         "title": "Show Source"
+      },
+      {
+        "command": "latex-preview.showCompileOutput",
+        "category": "LaTeX",
+        "title": "Show Preview Compile Output"
       }
     ],
     "menus": {

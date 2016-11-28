@@ -1,5 +1,9 @@
 # Changelog
 
+# Master
+
+* Show compile output in a "LaTeX Preview" output channel.
+
 # 0.2.1
 
 * Compile in correct directory so included files can be resolved.

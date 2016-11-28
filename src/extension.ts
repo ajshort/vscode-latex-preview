@@ -16,6 +16,7 @@ export function activate(ctx: ExtensionContext) {
     commands.registerCommand(constants.COMMAND_SHOW_PREVIEW_TO_SIDE, showPreviewToSide),
     commands.registerCommand(constants.COMMAND_SHOW_IN_PREVIEW, showInPreview),
     commands.registerCommand(constants.COMMAND_SHOW_SOURCE, showSource),
+    commands.registerCommand(constants.COMMAND_SHOW_COMPILE_OUTPUT, showCompileOutput),
   );
 
   // Document provider
@@ -117,4 +118,8 @@ function showSource(uri?: Uri) {
   }
 
   return workspace.openTextDocument(uri).then(window.showTextDocument);
+}
+
+function showCompileOutput() {
+  provider.showOutputChannel();
 }

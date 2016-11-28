@@ -21,6 +21,7 @@ export default class LatexDocumentProvider implements vscode.TextDocumentContent
   private connectedResolve = new Map<string, Function>();
 
   private diagnostics: vscode.DiagnosticCollection;
+  private output: vscode.OutputChannel;
 
   constructor(private context: vscode.ExtensionContext) {
     this.http = http.createServer();
@@ -36,11 +37,14 @@ export default class LatexDocumentProvider implements vscode.TextDocumentContent
     });
 
     this.diagnostics = vscode.languages.createDiagnosticCollection("LaTeX Preview");
+    this.output = vscode.window.createOutputChannel("LaTeX Preview");
   }
 
   public dispose() {
     this.server.close();
+
     this.diagnostics.dispose();
+    this.output.dispose();
   }
 
   /**
@@ -132,6 +136,10 @@ export default class LatexDocumentProvider implements vscode.TextDocumentContent
     this.clients.get(path).send(JSON.stringify({ type: "show", rect: rects[0] }));
   }
 
+  public showOutputChannel() {
+    this.output.show();
+  }
+
   /**
    * Builds a PDF and returns the path to it.
    */
@@ -148,9 +156,13 @@ export default class LatexDocumentProvider implements vscode.TextDocumentContent
       arg(path),
     ].join(" ");
 
+    this.output.clear();
+    this.output.appendLine(command);
+
     return new Promise((resolve, reject) => {
       cp.exec(command, { cwd: dirname(path) }, (err, out) => {
         this.diagnostics.clear();
+        this.output.append(out);
 
         if (err) {
           let regexp = new RegExp(constants.ERROR_REGEX, "gm");
