@@ -24,6 +24,7 @@ To generate a VSCode build task to run `pdflatex`, run the "LaTeX: Create Build 
 * **LaTeX: Show Preview to Side** Opens a preview in a column alongside the current document.
 * **LaTeX: Show in Preview** Jumps to the current cursor position in the preview document.
 * **LaTeX: Show Source** Shows the source document for the current preview.
+* **LaTeX: Show Preview Compile Output** Shows an output channel with the latex preview compile output.
 
 ## Configuration
 
