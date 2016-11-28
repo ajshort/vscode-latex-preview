@@ -1,6 +1,6 @@
 # Changelog
 
-# Master
+# 0.3.0
 
 * Show compile output in a "LaTeX Preview" output channel.
 * Show compile output when compile error clicked.
