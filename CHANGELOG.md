@@ -1,5 +1,9 @@
 # Changelog
 
+# 0.3.1
+
+* Fix issue when using MikTeX.
+
 # 0.3.0
 
 * Show compile output in a "LaTeX Preview" output channel.
