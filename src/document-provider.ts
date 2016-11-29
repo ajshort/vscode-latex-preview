@@ -152,7 +152,7 @@ export default class LatexDocumentProvider implements vscode.TextDocumentContent
       "-synctex=1",
       "-interaction=nonstopmode",
       "-file-line-error",
-      `-output-dir=${arg(dir)}`,
+      `-output-directory=${arg(dir)}`,
       arg(path),
     ].join(" ");
 
