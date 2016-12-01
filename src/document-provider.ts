@@ -96,16 +96,21 @@ export default class LatexDocumentProvider implements vscode.TextDocumentContent
   }
 
   public update(uri: vscode.Uri) {
-    const path = uri.fsPath;
+    let paths: string[];
 
-    if (!this.isPreviewing(path)) {
-      return;
+    if (vscode.workspace.getConfiguration().get<boolean>(constants.CONFIG_UPDATE_ALL_ON_SAVE)) {
+      paths = Array.from(this.clients.keys());
+    } else {
+      paths = [uri.fsPath];
     }
 
-    this.build(path, this.directories[path])
-      .then(pdf => ({ type: "update", path: pdf }))
-      .catch(() => ({ type: "error" }))
-      .then(data => this.clients.get(path).send(JSON.stringify(data)));
+    paths.filter(path => this.isPreviewing(path)).forEach(path => {
+      this
+        .build(path, this.directories[path])
+        .then(pdf => ({ type: "update", path: pdf }))
+        .catch(() => ({ type: "error" }))
+        .then(data => this.clients.get(path).send(JSON.stringify(data)));
+    });
   }
 
   /**

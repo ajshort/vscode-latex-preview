@@ -36,6 +36,11 @@
           "type": "string",
           "description": "The LaTeX command to use (pdflatex, xelatex, ...)",
           "default": "pdflatex"
+        },
+        "latex-preview.updateAllOnSave": {
+          "type": "boolean",
+          "description": "Whether to update all previews on save, or just the current document",
+          "default": true
         }
       }
     },
