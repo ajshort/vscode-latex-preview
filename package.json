@@ -3,7 +3,7 @@
   "displayName": "LaTeX Preview",
   "description": "Compilation and embedded preview of LaTeX documents",
   "icon": "media/icon.png",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "publisher": "ajshort",
   "license": "MIT",
   "repository": {

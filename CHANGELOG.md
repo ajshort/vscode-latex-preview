@@ -1,5 +1,10 @@
 # Changelog
 
+# 0.4.0
+
+* Allow using `latexmk` for generating the preview.
+* Re-generate all previews when any latex document is saved by default.
+
 # 0.3.1
 
 * Fix issue when using MikTeX.
