@@ -63,7 +63,7 @@ export default class LatexDocumentProvider implements vscode.TextDocumentContent
     // Create a working dir and start listening.
     const path = uri.fsPath;
 
-    this.directories[path] = await this.createTempDir();
+    this.directories.set(path, await this.createTempDir());
     this.listenForConnection(path);
 
     // Generate the document content.
@@ -106,7 +106,7 @@ export default class LatexDocumentProvider implements vscode.TextDocumentContent
 
     paths.filter(path => this.isPreviewing(path)).forEach(path => {
       this
-        .build(path, this.directories[path])
+        .build(path, this.directories.get(path))
         .then(pdf => ({ type: "update", path: pdf }))
         .catch(() => ({ type: "error" }))
         .then(data => this.clients.get(path).send(JSON.stringify(data)));
@@ -131,7 +131,7 @@ export default class LatexDocumentProvider implements vscode.TextDocumentContent
       line: position.line + 1,
       column: position.character + 1,
       input: path,
-      output: `${this.directories[path]}/preview.pdf`,
+      output: `${this.directories.get(path)}/preview.pdf`,
     });
 
     if (rects.length === 0) {
@@ -223,7 +223,7 @@ export default class LatexDocumentProvider implements vscode.TextDocumentContent
 
   private async onClientClick(client: ws, data: any) {
     const path = this.getPathForClient(client);
-    const file = `${this.directories[path]}/preview.pdf`;
+    const file = `${this.directories.get(path)}/preview.pdf`;
 
     const location = await synctex.edit(Object.assign(data, { file }));
 
