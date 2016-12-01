@@ -149,17 +149,17 @@ export default class LatexDocumentProvider implements vscode.TextDocumentContent
    * Builds a PDF and returns the path to it.
    */
   private build(path: string, dir: string): Promise<string> {
-    const executable = vscode.workspace.getConfiguration().get(constants.CONFIG_COMMAND, "pdflatex");
+    let command = vscode.workspace.getConfiguration().get(constants.CONFIG_COMMAND, "pdflatex");
+    let args = ["-jobname=preview", "-synctex=1", "-interaction=nonstopmode", "-file-line-error"];
 
-    const command = [
-      executable,
-      "-jobname=preview",
-      "-synctex=1",
-      "-interaction=nonstopmode",
-      "-file-line-error",
-      `-output-directory=${arg(dir)}`,
-      arg(path),
-    ].join(" ");
+    if (command === "latexmk") {
+      args.push("-pdf");
+    }
+
+    args.push(`-output-directory=${arg(dir)}`);
+    args.push(arg(path));
+
+    command = [command].concat(...args).join(" ");
 
     this.output.clear();
     this.output.appendLine(command);
