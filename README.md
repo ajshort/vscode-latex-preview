@@ -13,7 +13,8 @@
 
 Open a `.tex` file, and then click the "Open Preview" button in the title bar. This will open a preview rendering which
 is updated when you save the document. To go from a source code location to a preview location, select "Show in Preview"
-in the editor context menu. You can also click on the preview document to go to the corresponding source code.
+in the editor context menu. You can also click on the preview document to go to the corresponding source code. If you
+want to use xetex or latexmk to generate your preview you can change the `latex-preview.command` config option.
 
 To generate a VSCode build task to run `pdflatex`, run the "LaTeX: Create Build Task" command.
 
