@@ -96,8 +96,11 @@ function loadAndRender(source: string) {
 function renderPages() {
   viewports = [];
 
+  // Get the widest page.
+  const width = Math.max(...pages.map(page => page.getViewport(1).width));
+
   for (let i = 0; i < pages.length; i++) {
-    const scale = zoom * document.body.clientWidth / pages[i].getViewport(1).width;
+    const scale = zoom * document.body.clientWidth / width;
     const viewport = pages[i].getViewport(scale);
 
     viewports.push(viewport);
