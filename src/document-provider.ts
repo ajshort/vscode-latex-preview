@@ -165,16 +165,17 @@ export default class LatexDocumentProvider implements vscode.TextDocumentContent
     this.output.appendLine(command);
 
     return new Promise((resolve, reject) => {
-      cp.exec(command, { cwd: dirname(path) }, (err, out) => {
+      cp.exec(command, { cwd: dirname(path) }, (err, stdout, stderr) => {
         this.diagnostics.clear();
-        this.output.append(out);
+        this.output.append(stdout);
+        this.output.append(stderr);
 
         if (err) {
           let regexp = new RegExp(constants.ERROR_REGEX, "gm");
           let entries = [];
           let matches: RegExpExecArray;
 
-          while ((matches = regexp.exec(out)) != null) {
+          while ((matches = regexp.exec(stdout)) != null) {
             const line = parseInt(matches[2], 10) - 1;
             const range = new vscode.Range(line, 0, line, Number.MAX_VALUE);
 
