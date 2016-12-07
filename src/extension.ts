@@ -1,6 +1,6 @@
 import * as constants from "./constants";
 import LatexDocumentProvider from "./document-provider";
-import { basename } from "path";
+import { basename, resolve } from "path";
 import { ExtensionContext, Uri, ViewColumn, commands, languages, window, workspace } from "vscode";
 
 /**
@@ -60,7 +60,12 @@ async function createBuildTask() {
 }
 
 function showPreview(uri?: Uri, column?: ViewColumn) {
-  if (!uri && window.activeTextEditor) {
+  // Use the configured filename, or the current editor.
+  const filename = workspace.getConfiguration().get<string>(constants.CONFIG_FILENAME);
+
+  if (filename) {
+    uri = Uri.file(resolve(workspace.rootPath, filename));
+  } else if (!uri && window.activeTextEditor) {
     uri = window.activeTextEditor.document.uri;
   }
 

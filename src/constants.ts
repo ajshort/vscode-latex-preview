@@ -11,4 +11,5 @@ export const COMMAND_SHOW_SOURCE = "latex-preview.showSource";
 export const COMMAND_SHOW_COMPILE_OUTPUT = "latex-preview.showCompileOutput";
 
 export const CONFIG_COMMAND = "latex-preview.command";
+export const CONFIG_FILENAME = "latex-preview.filename";
 export const CONFIG_UPDATE_ALL_ON_SAVE = "latex-preview.updateAllOnSave";

@@ -37,6 +37,10 @@
           "description": "The LaTeX command to use (pdflatex, xelatex, latexmk)",
           "default": "pdflatex"
         },
+        "latex-preview.filename": {
+          "type": "string",
+          "description": "The file to compile for the preview. It not set, uses the current file"
+        },
         "latex-preview.updateAllOnSave": {
           "type": "boolean",
           "description": "Whether to update all previews on save, or just the current document",
