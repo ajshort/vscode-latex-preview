@@ -1,5 +1,11 @@
 # Changelog
 
+# 0.5.0
+
+* Scale to the widest page.
+* Show stderr in the output.
+* Config option `latex-preview.filename` to specify the file to preview.
+
 # 0.4.0
 
 * Allow using `latexmk` for generating the preview.
