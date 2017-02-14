@@ -2,7 +2,7 @@ import * as constants from "./constants";
 import * as synctex from "./synctex";
 import * as cp from "child_process";
 import * as http from "http";
-import { dirname } from "path";
+import { basename, dirname, join } from "path";
 import * as tmp from "tmp";
 import * as vscode from "vscode";
 import * as ws from "ws";
@@ -27,7 +27,7 @@ export default class LatexDocumentProvider implements vscode.TextDocumentContent
     this.http = http.createServer();
     this.server = ws.createServer({ server: this.http });
 
-    this.listening = new Promise((c, e) => {
+    this.listening = new Promise<void>((c, e) => {
       this.http.listen(0, "localhost", undefined, err => err ? e(err) : c());
     });
 
@@ -149,8 +149,9 @@ export default class LatexDocumentProvider implements vscode.TextDocumentContent
    * Builds a PDF and returns the path to it.
    */
   private build(path: string, dir: string): Promise<string> {
+    let jobname = "preview";
     let command = vscode.workspace.getConfiguration().get(constants.CONFIG_COMMAND, "pdflatex");
-    let args = ["-jobname=preview", "-synctex=1", "-interaction=nonstopmode", "-file-line-error"];
+    let args = [`-jobname=${arg(jobname)}`, "-synctex=1", "-interaction=nonstopmode", "-file-line-error"];
 
     if (command === "latexmk") {
       args.push("-pdf");
@@ -159,11 +160,47 @@ export default class LatexDocumentProvider implements vscode.TextDocumentContent
     args.push(`-output-directory=${arg(dir)}`);
     args.push(arg(path));
 
+    // The LaTeX compiler command
     command = [command].concat(...args).join(" ");
 
     this.output.clear();
     this.output.appendLine(command);
+    return this.compile(command, path, dir, true).catch(rejected => {
+      if (rejected.indexOf("There were undefined citations") < 0) {
+        // There was an error, instead of undefined citations
+        return rejected;
+      }
 
+      // BibTeX command to be executed in output directory
+      let bibCommand = vscode.workspace.getConfiguration().get(constants.BIBTEX_COMMAND, "bibtex")
+                            + ` ${jobname}`;
+
+      // Determine whether to use copy or cp
+      let copyCommand = "copy";
+      if (process.platform == "darwin" || process.platform == "linux") {
+        copyCommand = "cp";
+      }
+
+      // Command sequence to fix undefined citations:
+      //    1. copy bib files to the output directory
+      //    2. cd into output directory
+      //    3. call bibtex on the jobname aux file
+      //    4. call LaTeX compiler twice
+      let bibSequence = [
+        `${copyCommand} ${arg(join(dirname(path), "*.bib"))} ${arg(dir)}`,
+        `cd ${arg(dir)}`,
+        bibCommand,
+        `cd ${arg(dirname(path))}`,
+        command,
+        command
+      ].join(' && ');
+      this.output.appendLine(bibSequence);
+
+      return this.compile(bibSequence, path, dir, false);
+    });
+  }
+
+  private compile(command: string, path: string, dir: string, firstInvk: boolean): Promise<string> {
     return new Promise((resolve, reject) => {
       cp.exec(command, { cwd: dirname(path) }, (err, stdout, stderr) => {
         this.diagnostics.clear();
@@ -186,8 +223,12 @@ export default class LatexDocumentProvider implements vscode.TextDocumentContent
           }
 
           this.diagnostics.set(entries);
-
           reject(err);
+          
+          // firstInvk prevents an infinite loop in case the BibTeX command sequence can't fix
+          // undefined citations
+        } else if (firstInvk && stdout.indexOf("There were undefined citations") >= 0) {
+          reject(stdout);
         } else {
           resolve(`${dir}/preview.pdf`);
         }
@@ -196,7 +237,7 @@ export default class LatexDocumentProvider implements vscode.TextDocumentContent
   }
 
   private listenForConnection(path: string) {
-    this.connected.set(path, new Promise(resolve => {
+    this.connected.set(path, new Promise<void>(resolve => {
       this.connectedResolve.set(path, resolve);
     }));
   }

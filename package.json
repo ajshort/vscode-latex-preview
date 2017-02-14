@@ -37,6 +37,11 @@
           "description": "The LaTeX command to use (pdflatex, xelatex, latexmk)",
           "default": "pdflatex"
         },
+        "latex-preview.bibtex": {
+          "type": "string",
+          "description": "The BibTeX command to use (bibtex)",
+          "default": "bibtex"
+        },
         "latex-preview.filename": {
           "type": "string",
           "description": "The file to compile for the preview. It not set, uses the current file"
