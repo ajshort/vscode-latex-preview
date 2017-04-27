@@ -166,7 +166,8 @@ export default class LatexDocumentProvider implements vscode.TextDocumentContent
     this.output.appendLine(command);
 
     return new Promise((resolve, reject) => {
-      cp.exec(command, { cwd: dirname(path) }, (err, stdout, stderr) => {
+      let env = Object.assign({}, process.env, { "OUTPUTDIR": arg(dir) });
+      cp.exec(command, { cwd: dirname(path), env: env }, (err, stdout, stderr) => {
         this.diagnostics.clear();
         this.output.append(stdout);
         this.output.append(stderr);
