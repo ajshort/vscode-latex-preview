@@ -116,7 +116,7 @@
     "postinstall": "node ./node_modules/vscode/bin/install"
   },
   "dependencies": {
-    "pdfjs-dist": "^1.6.329",
+    "pdfjs-dist": "1.6.329",
     "tmp": "0.0.30",
     "ws": "^1.1.1"
   },
