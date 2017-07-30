@@ -1,8 +1,9 @@
 # Changelog
 
-## 0.5.1 (Unreleased)
+## 0.5.1
 
 * Mirror the project structure in the build directory so sub-folder includes work.
+* Set OUTPUTDIR env variable to the build dir (thanks @phyrog).
 
 ## 0.5.0
 
