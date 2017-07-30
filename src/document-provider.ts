@@ -1,8 +1,9 @@
 import * as constants from "./constants";
 import * as synctex from "./synctex";
 import * as cp from "child_process";
+import { mkdir } from "fs";
 import * as http from "http";
-import { dirname } from "path";
+import { dirname, join, relative } from "path";
 import * as tmp from "tmp";
 import * as vscode from "vscode";
 import * as ws from "ws";
@@ -63,7 +64,7 @@ export default class LatexDocumentProvider implements vscode.TextDocumentContent
     // Create a working dir and start listening.
     const path = uri.fsPath;
 
-    this.directories.set(path, await this.createTempDir());
+    this.directories.set(path, await this.createTempDir(path));
     this.listenForConnection(path);
 
     // Generate the document content.
@@ -258,10 +259,26 @@ export default class LatexDocumentProvider implements vscode.TextDocumentContent
   /**
    * Creates a new temporary directory.
    */
-  private createTempDir(): Promise<string> {
-    return new Promise((c, e) => {
-      tmp.dir({ unsafeCleanup: true }, (err, dir) => err ? e(err) : c(dir));
-    });
+  private async createTempDir(target: string): Promise<string> {
+    const dir = await new Promise<string>((c, e) =>
+      tmp.dir({ unsafeCleanup: true }, (err, path) => err ? e(err) : c(path))
+    );
+
+    const wd = dirname(vscode.workspace.asRelativePath(target));
+    const texs = await vscode.workspace.findFiles(join(wd, '**/*.tex'), "");
+
+    const mkdirs = new Set(
+      texs.map(file => dirname(file.fsPath))
+          .map(dir => relative(dirname(target), dir))
+          .filter(dir => !!dir)
+          .sort((a, b) => a.length - b.length)
+    );
+
+    await Promise.all([...mkdirs].map(subdir => new Promise((c, e) => {
+      mkdir(join(dir, subdir), err => err ? e(err) : c())
+    })));
+
+    return dir;
   }
 
   private getResourcePath(file: string): string {
